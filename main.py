@@ -55,7 +55,7 @@ def overlay_images(background_path, overlay_path, blur_path, logo_path, output_p
 
 def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
                      text_color="white", font_path="arial.ttf", font_size=50,
-                     max_width=None, line_spacing=10, show=False):
+                     max_width=None, line_spacing=10):
     """Thêm chữ vào ảnh với định dạng màu cho text trong dấu {} và giữ nguyên cụm từ."""
     try:
         image = Image.open(image_path).convert("RGBA")
@@ -126,8 +126,6 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
                 draw_line_position += draw.textlength(line_part + " ", font=font)
 
         image.save(output_path)
-        if show:
-            image.show()
         return output_path
     except Exception as e:
         print(f"Lỗi khi thêm chữ: {e}")
@@ -164,9 +162,6 @@ try:
                 lines = file_read.readlines()
             
             lines[2 + i * 2] = formatted_text + "\n"  # 2 + i * 3 là vị trí của dòng text
-            print(2 + i * 3)
-            with open("text.txt", "w", encoding="utf-8") as file_write:
-                file_write.writelines(lines)
 
             overlay_path = get_image(link)
             if not overlay_path:
@@ -193,7 +188,7 @@ try:
                 text=formatted_text,
                 text_position=(103, 1414),
                 text_color="white",
-                font_path="SCHLBKB.TTF",
+                font_path="seguibl.ttf",
                 font_size=95,
                 max_width=1100,
                 line_spacing=15
@@ -211,8 +206,7 @@ try:
                 font_path="CENTURY.TTF",
                 font_size=100,
                 max_width=1100,
-                line_spacing=15,
-                show=True
+                line_spacing=15
             )
 
 except FileNotFoundError:
