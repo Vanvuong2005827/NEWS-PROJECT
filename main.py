@@ -72,13 +72,45 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
         if max_width is None:
             max_width = image.width - text_position[0] * 2  # Đặt giới hạn theo ảnh
 
-        # Chia văn bản thành các dòng vừa với max_width
-        wrapped_text = textwrap.wrap(text, width=22)  # Số ký tự mỗi dòng (tùy chỉnh)
-
         x, y = text_position
-        for line in wrapped_text:
-            draw.text((x, y), line, fill=text_color, font=font)
-            y += font_size + line_spacing  # Di chuyển xuống dòng mới
+
+        # Tách văn bản thành các phần, giữ nguyên các cụm từ trong {}
+        parts = []
+        start = 0
+        while True:
+            # Tìm vị trí của dấu {
+            brace_start = text.find("{", start)
+            if brace_start == -1:
+                # Nếu không còn dấu {, thêm phần còn lại của văn bản
+                parts.append((text[start:], text_color))
+                break
+            # Thêm phần trước dấu {
+            parts.append((text[start:brace_start], text_color))
+            # Tìm vị trí của dấu }
+            brace_end = text.find("}", brace_start)
+            if brace_end == -1:
+                # Nếu không có dấu }, coi toàn bộ phần còn lại là cụm từ
+                parts.append((text[brace_start:], "#FFC91D"))
+                break
+            # Thêm cụm từ trong {}
+            parts.append((text[brace_start + 1:brace_end], "#FFC91D"))
+            start = brace_end + 1
+
+        # Xử lý từng phần
+        for part, color in parts:
+            words = part.split()
+            for word in words:
+                # Kiểm tra xem thêm từ này có vượt quá max_width không
+                test_line = word
+                test_width = draw.textlength(test_line, font=font)
+                if x + test_width > max_width:
+                    # Nếu vượt quá, xuống dòng mới
+                    x = text_position[0]
+                    y += font_size + line_spacing
+
+                # Vẽ từ hiện tại với màu tương ứng
+                draw.text((x, y), word, fill=color, font=font)
+                x += test_width + draw.textlength(" ", font=font)  # Thêm khoảng cách giữa các từ
 
         image.save(output_path)
         return output_path
@@ -87,11 +119,12 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
         return None
 
 
+
 def get_ai_formatted_text(text):
     """Lấy text đã được format từ AI."""
     try:
         client = genai.Client(api_key="AIzaSyDaQhCfd8t8ZrZ029sTHElzylZavE5SWPM")
-        prompt = f"Bạn là một chuyên gia tóm tắt 20 năm kinh nghiệm. Hãy nhấn mạnh các từ ngữ trong nội dùng sau đây  '{text}' từ nào cần nhấn mạnh chỉ cần để là {{từ ngữ cần nhấn mạnh}}. Chỉ được nhấn mạnh tối đa 20% số chữ trong câu (bắt buộc phải 20%). Hãy xuất ra kết quả luôn ( không có các dẫu * hay đóng ngoặc gì hết) "
+        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác (lưu lý kĩ điều này) . Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt
@@ -162,8 +195,8 @@ try:
                     text=datetime.now().strftime("%d/%m/%Y"), 
                     text_position=(108, 1960),
                     text_color="#FFC91D",
-                    font_path="CENTURY.TTF",
-                    font_size=95,
+                    font_path="seguibl.ttf",
+                    font_size=105,
                     max_width=1100,
                     line_spacing=15
                 )
