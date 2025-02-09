@@ -53,10 +53,12 @@ def overlay_images(background_path, overlay_path, blur_path, logo_path, output_p
         print(f"Lỗi khi ghép ảnh: {e}")
         return None
 
+import textwrap
+
 def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
                      text_color="white", font_path="arial.ttf", font_size=50,
-                     max_width=None, line_spacing=10):
-    """Thêm chữ vào ảnh với định dạng màu cho text trong dấu {} và giữ nguyên cụm từ."""
+                     max_width=1200, line_spacing=10):
+    """Thêm chữ vào ảnh với vùng giới hạn, tự động xuống dòng bằng text box."""
     try:
         image = Image.open(image_path).convert("RGBA")
         draw = ImageDraw.Draw(image)
@@ -68,68 +70,22 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
             font = ImageFont.load_default()
 
         if max_width is None:
-            max_width = image.width - 100
+            max_width = image.width - text_position[0] * 2  # Đặt giới hạn theo ảnh
 
-        # Định nghĩa line_height
-        line_height = font_size + line_spacing
-
-        # Tách text thành các phần theo dấu {}
-        parts = re.split(r'({[^}]*})|(\s+)', text)
-        parts = [p for p in parts if p is not None and p.strip()]
+        # Chia văn bản thành các dòng vừa với max_width
+        wrapped_text = textwrap.wrap(text, width=22)  # Số ký tự mỗi dòng (tùy chỉnh)
 
         x, y = text_position
-        current_y = y
-        current_x = x
-        current_line = []
-        current_line_width = 0
-
-        for part in parts:
-            is_special = part.startswith('{') and part.endswith('}')
-            
-            # Tính toán chiều rộng của phần text
-            if is_special:
-                part_text = part[1:-1]  # Bỏ dấu {}
-                part_width = draw.textlength(part_text, font=font)
-            else:
-                part_text = part
-                part_width = draw.textlength(part, font=font)
-
-            # Kiểm tra xem có cần xuống dòng không
-            if current_x + part_width > x + max_width:
-                # Vẽ dòng hiện tại
-                draw_line_position = x
-                for line_part, line_special in current_line:
-                    color = "#FFC91D" if line_special else text_color
-                    draw.text((draw_line_position, current_y), line_part, fill=color, font=font)
-                    draw_line_position += draw.textlength(line_part + " ", font=font)
-                
-                # Xuống dòng mới
-                current_y += line_height
-                current_x = x
-                current_line = []
-                current_line_width = 0
-
-            # Thêm phần text vào dòng hiện tại
-            if is_special:
-                current_line.append((part_text, True))
-            else:
-                current_line.append((part_text, False))
-            current_x += part_width + draw.textlength(" ", font=font)
-            current_line_width += part_width + draw.textlength(" ", font=font)
-
-        # Vẽ dòng cuối cùng nếu có
-        if current_line:
-            draw_line_position = x
-            for line_part, line_special in current_line:
-                color = "#FFC91D" if line_special else text_color
-                draw.text((draw_line_position, current_y), line_part, fill=color, font=font)
-                draw_line_position += draw.textlength(line_part + " ", font=font)
+        for line in wrapped_text:
+            draw.text((x, y), line, fill=text_color, font=font)
+            y += font_size + line_spacing  # Di chuyển xuống dòng mới
 
         image.save(output_path)
         return output_path
     except Exception as e:
         print(f"Lỗi khi thêm chữ: {e}")
         return None
+
 
 def get_ai_formatted_text(text):
     """Lấy text đã được format từ AI."""
