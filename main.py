@@ -12,7 +12,7 @@ def get_image(url):
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         image = Image.open(BytesIO(response.content))
-        image_path = "./temp_downloaded.jpg"
+        image_path = "./temp_downloaded.png"
         image.save(image_path)
         return image_path
     except requests.RequestException as e:
@@ -44,7 +44,10 @@ def overlay_images(background_path, overlay_path, blur_path, logo_path, output_p
         background.paste(blur, (0, 0), blur)
         background.paste(logo, (106, 1135), logo)
 
-        background.save(output_path)
+        if output_path.lower().endswith(".jpg") or output_path.lower().endswith(".jpeg") or output_path.lower().endswith(".png"):
+            background.convert("RGB").save(output_path, "JPEG")
+        else:
+            background.save(output_path)
         return output_path
     except Exception as e:
         print(f"Lỗi khi ghép ảnh: {e}")
@@ -134,7 +137,7 @@ def get_ai_formatted_text(text):
     """Lấy text đã được format từ AI."""
     try:
         client = genai.Client(api_key="AIzaSyDaQhCfd8t8ZrZ029sTHElzylZavE5SWPM")
-        prompt = f"Bạn là một chuyên gia tóm tắt 20 năm kinh nghiệm. Hãy nhấn mạnh các từ ngữ trong nội dùng sau đây  '{text}' từ nào cần nhấn mạnh chỉ cần để là {{từ ngữ cần nhấn mạnh}}. Chỉ được nhấn mạnh tối đa nửa số chữ trong câu "
+        prompt = f"Bạn là một chuyên gia tóm tắt 20 năm kinh nghiệm. Hãy nhấn mạnh các từ ngữ trong nội dùng sau đây  '{text}' từ nào cần nhấn mạnh chỉ cần để là {{từ ngữ cần nhấn mạnh}}. Chỉ được nhấn mạnh tối đa 20% số chữ trong câu (bắt buộc phải 20%). Hãy xuất ra kết quả luôn ( không có các dẫu * hay đóng ngoặc gì hết) "
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt
@@ -160,8 +163,8 @@ try:
             with open("text.txt", "r", encoding="utf-8") as file_read:
                 lines = file_read.readlines()
             
-            lines[2 + i * 3] = formatted_text + "\n"  # 2 + i * 3 là vị trí của dòng text
-            
+            lines[2 + i * 2] = formatted_text + "\n"  # 2 + i * 3 là vị trí của dòng text
+            print(2 + i * 3)
             with open("text.txt", "w", encoding="utf-8") as file_write:
                 file_write.writelines(lines)
 
@@ -190,8 +193,8 @@ try:
                 text=formatted_text,
                 text_position=(103, 1414),
                 text_color="white",
-                font_path="seguibl.ttf",
-                font_size=90,
+                font_path="SCHLBKB.TTF",
+                font_size=95,
                 max_width=1100,
                 line_spacing=15
             )
@@ -203,9 +206,9 @@ try:
                 filename, 
                 filename,
                 text=datetime.now().strftime("%d/%m/%Y"), 
-                text_position=(108, 1914),
+                text_position=(108, 1960),
                 text_color="#FFC91D",
-                font_path="GOTHICB.TTF",
+                font_path="CENTURY.TTF",
                 font_size=100,
                 max_width=1100,
                 line_spacing=15,
