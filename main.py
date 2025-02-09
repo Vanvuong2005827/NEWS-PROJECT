@@ -155,7 +155,10 @@ try:
             original_text = file.readline().strip()
             
             # Lấy text được format từ AI
-            formatted_text = get_ai_formatted_text(original_text)
+            if i == 0:
+                formatted_text = original_text
+            else:
+                formatted_text = get_ai_formatted_text(original_text)
             
             # Ghi đè lại text.txt với text mới từ AI
             with open("text.txt", "r", encoding="utf-8") as file_read:
@@ -196,18 +199,19 @@ try:
             if not text_image:
                 print(f"Bỏ qua ảnh {i} do lỗi viết text.")
                 continue
-
-            add_text_to_image(
-                filename, 
-                filename,
-                text=datetime.now().strftime("%d/%m/%Y"), 
-                text_position=(108, 1960),
-                text_color="#FFC91D",
-                font_path="CENTURY.TTF",
-                font_size=100,
-                max_width=1100,
-                line_spacing=15
-            )
+            if i == 0:
+                add_text_to_image(
+                    filename, 
+                    filename,
+                    text=datetime.now().strftime("%d/%m/%Y"), 
+                    text_position=(108, 1960),
+                    text_color="#FFC91D",
+                    font_path="CENTURY.TTF",
+                    font_size=95,
+                    max_width=1100,
+                    line_spacing=15
+                )
+    print("Done")
 
 except FileNotFoundError:
     print("Lỗi: Không tìm thấy file text.txt!")
