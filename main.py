@@ -108,7 +108,7 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
 
                 # Vẽ từ hiện tại với màu tương ứng
                 draw.text((x, y), word, fill=color, font=font)
-                x += test_width  # Thêm khoảng cách giữa các từ
+                x += test_width 
 
         image.save(output_path)
         return output_path
@@ -117,17 +117,23 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
         return None
 
 
-
 def get_ai_formatted_text(text):
     """Lấy text đã được format từ AI."""
     try:
         client = genai.Client(api_key="AIzaSyDaQhCfd8t8ZrZ029sTHElzylZavE5SWPM")
-        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác (lưu lý kĩ điều này) . Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
+        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác (lưu lý kĩ điều này). Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt
         )
-        return response.text.strip()
+        pretext = response.text
+# Kiểm tra và xóa nếu vẫn còn dấu nháy đơn hoặc dấu chấm ở đầu/cuối
+        clean_text = pretext.replace("'", "")
+        clean_text = clean_text.replace(".", "")
+        clean_text = clean_text.replace('"', '')
+        if clean_text.startswith("{") :
+            clean_text = clean_text[:1] + clean_text[1].upper() + clean_text[2:]
+        return clean_text.strip()
     except Exception as e:
         print(f"Lỗi khi gọi AI: {e}")
         return text
@@ -144,7 +150,7 @@ try:
             # Lấy text được format từ AI
             if i == 0:
                 time = datetime.now().strftime("%d/%m/%Y")
-                formatted_text = f"{original_text} {{{time}}}"
+                formatted_text = f"{original_text}              {{{time}}}"
             else:
                 formatted_text = get_ai_formatted_text(original_text)
             
@@ -152,7 +158,7 @@ try:
             with open("text.txt", "r", encoding="utf-8") as file_read:
                 lines = file_read.readlines()
             
-            lines[2 + i * 2] = formatted_text + "\n"  # 2 + i * 3 là vị trí của dòng text
+            lines[2 + i * 2] = formatted_text + "\n"
 
             overlay_path = get_image(link)
             if not overlay_path:
