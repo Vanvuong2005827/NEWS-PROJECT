@@ -5,6 +5,9 @@ import requests
 from io import BytesIO
 import re
 from google import genai
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+
 
 def get_image(url):
     """Tải ảnh từ URL và lưu vào file tạm."""
@@ -124,12 +127,21 @@ def get_ai_formatted_text(text):
     """Lấy text đã được format từ AI."""
     try:
         client = genai.Client(api_key="AIzaSyDaQhCfd8t8ZrZ029sTHElzylZavE5SWPM")
-        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác (lưu lý kĩ điều này) . Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
+        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác như dấu (lưu lý kĩ điều này) . Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt
         )
-        return response.text.strip()
+        pretext = response.text.strip(" '’.")
+
+# Kiểm tra và xóa nếu vẫn còn dấu nháy đơn hoặc dấu chấm ở đầu/cuối
+        clean_text = pretext.replace("'", "")
+        clean_text = clean_text.replace(".", "").capitalize()
+        if clean_text.startswith("{") :
+            clean_text = clean_text[:1] + clean_text[1].upper() + clean_text[2:]
+        print(clean_text)
+
+        return clean_text
     except Exception as e:
         print(f"Lỗi khi gọi AI: {e}")
         return text
@@ -180,7 +192,7 @@ try:
                 text=formatted_text,
                 text_position=(103, 1414),
                 text_color="white",
-                font_path="seguibl.ttf",
+                font_path="GARABD.TTF",
                 font_size=95,
                 max_width=1100,
                 line_spacing=15
@@ -193,9 +205,9 @@ try:
                     filename, 
                     filename,
                     text=datetime.now().strftime("%d/%m/%Y"), 
-                    text_position=(108, 1960),
+                    text_position=(118, 1860),
                     text_color="#FFC91D",
-                    font_path="seguibl.ttf",
+                    font_path="GARABD.TTF",
                     font_size=105,
                     max_width=1100,
                     line_spacing=15
