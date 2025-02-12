@@ -5,9 +5,6 @@ import requests
 from io import BytesIO
 import re
 from google import genai
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
-
 
 def get_image(url):
     """Tải ảnh từ URL và lưu vào file tạm."""
@@ -45,7 +42,7 @@ def overlay_images(background_path, overlay_path, blur_path, logo_path, output_p
 
         background.paste(overlay, position, overlay)
         background.paste(blur, (0, 0), blur)
-        background.paste(logo, (106, 1135), logo)
+        background.paste(logo, (90, 1135), logo)
 
         if output_path.lower().endswith(".jpg") or output_path.lower().endswith(".jpeg") or output_path.lower().endswith(".png"):
             background.convert("RGB").save(output_path, "JPEG")
@@ -55,8 +52,6 @@ def overlay_images(background_path, overlay_path, blur_path, logo_path, output_p
     except Exception as e:
         print(f"Lỗi khi ghép ảnh: {e}")
         return None
-
-import textwrap
 
 def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
                      text_color="white", font_path="arial.ttf", font_size=50,
@@ -101,7 +96,7 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
 
         # Xử lý từng phần
         for part, color in parts:
-            words = part.split()
+            words = re.findall(r'\w+|\W+', part)
             for word in words:
                 # Kiểm tra xem thêm từ này có vượt quá max_width không
                 test_line = word
@@ -113,7 +108,7 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
 
                 # Vẽ từ hiện tại với màu tương ứng
                 draw.text((x, y), word, fill=color, font=font)
-                x += test_width + draw.textlength(" ", font=font)  # Thêm khoảng cách giữa các từ
+                x += test_width  # Thêm khoảng cách giữa các từ
 
         image.save(output_path)
         return output_path
@@ -127,21 +122,12 @@ def get_ai_formatted_text(text):
     """Lấy text đã được format từ AI."""
     try:
         client = genai.Client(api_key="AIzaSyDaQhCfd8t8ZrZ029sTHElzylZavE5SWPM")
-        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác như dấu (lưu lý kĩ điều này) . Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
+        prompt = f"Bạn là một chuyên gia xử lý ngôn ngữ. Nhiệm vụ của bạn là chọn một vài từ quan trọng trong đoạn văn và đặt chúng trong {{ }} để nhấn mạnh. Hãy ưu tiên danh từ riêng (tên người, địa danh, công ty), số liệu quan trọng (ngày tháng, năm, giá tiền) và từ khóa chính giúp làm rõ nội dung. Đảm bảo giữ nguyên nội dung, ngữ pháp và chỉ sử dụng {{ }} để đánh dấu mà không thêm bất kỳ ký hiệu nào khác (lưu lý kĩ điều này) . Hãy áp dụng quy tắc này cho đoạn văn sau và xuất ra kết quả: '{text}'."
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt
         )
-        pretext = response.text.strip(" '’.")
-
-# Kiểm tra và xóa nếu vẫn còn dấu nháy đơn hoặc dấu chấm ở đầu/cuối
-        clean_text = pretext.replace("'", "")
-        clean_text = clean_text.replace(".", "").capitalize()
-        if clean_text.startswith("{") :
-            clean_text = clean_text[:1] + clean_text[1].upper() + clean_text[2:]
-        print(clean_text)
-
-        return clean_text
+        return response.text.strip()
     except Exception as e:
         print(f"Lỗi khi gọi AI: {e}")
         return text
@@ -157,7 +143,8 @@ try:
             
             # Lấy text được format từ AI
             if i == 0:
-                formatted_text = original_text
+                time = datetime.now().strftime("%d/%m/%Y")
+                formatted_text = f"{original_text} {{{time}}}"
             else:
                 formatted_text = get_ai_formatted_text(original_text)
             
@@ -192,26 +179,14 @@ try:
                 text=formatted_text,
                 text_position=(103, 1414),
                 text_color="white",
-                font_path="GARABD.TTF",
-                font_size=95,
+                font_path="./EBGaramond-Bold.ttf",
+                font_size=105,
                 max_width=1100,
                 line_spacing=15
             )
             if not text_image:
                 print(f"Bỏ qua ảnh {i} do lỗi viết text.")
                 continue
-            if i == 0:
-                add_text_to_image(
-                    filename, 
-                    filename,
-                    text=datetime.now().strftime("%d/%m/%Y"), 
-                    text_position=(118, 1860),
-                    text_color="#FFC91D",
-                    font_path="GARABD.TTF",
-                    font_size=105,
-                    max_width=1100,
-                    line_spacing=15
-                )
     print("Done")
 
 except FileNotFoundError:
