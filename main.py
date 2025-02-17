@@ -88,10 +88,10 @@ def add_text_to_image(image_path, output_path, text, text_position=(50, 50),
             brace_end = text.find("}", brace_start)
             if brace_end == -1:
                 # Nếu không có dấu }, coi toàn bộ phần còn lại là cụm từ
-                parts.append((text[brace_start:], "#FFC91D"))
+                parts.append((text[brace_start:], "#fada23"))
                 break
             # Thêm cụm từ trong {}
-            parts.append((text[brace_start + 1:brace_end], "#FFC91D"))
+            parts.append((text[brace_start + 1:brace_end], "#fada23"))
             start = brace_end + 1
 
         # Xử lý từng phần
@@ -150,7 +150,7 @@ try:
             # Lấy text được format từ AI
             if i == 0:
                 time = datetime.now().strftime("%d/%m/%Y")
-                formatted_text = f"{original_text}              {{{time}}}"
+                formatted_text = f"{original_text}       {{{time}}}"
             else:
                 formatted_text = get_ai_formatted_text(original_text)
             
@@ -190,6 +190,20 @@ try:
                 max_width=1100,
                 line_spacing=15
             )
+
+            if i == 0:
+                text_image = add_text_to_image(
+                    merged_image, 
+                    filename, 
+                    text="- Chỉ 10 giây mỗi ngày để nắm bắt tin tức -",
+                    text_position=(113, 1884),
+                    text_color="white",
+                    font_path="./EBGaramond-Bold.ttf",
+                    font_size=55,
+                    max_width=1100,
+                    line_spacing=15
+               )
+
             if not text_image:
                 print(f"Bỏ qua ảnh {i} do lỗi viết text.")
                 continue
